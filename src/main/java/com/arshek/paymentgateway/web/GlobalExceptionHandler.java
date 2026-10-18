@@ -42,29 +42,29 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiError> handleUnreadable(HttpMessageNotReadableException ex) {
+    public ResponseEntity<ApiError> handleUnreadable() {
         return ResponseEntity.badRequest().body(ApiError.of("malformed_request", "Request body is missing or malformed"));
     }
 
     @ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
-    public ResponseEntity<ApiError> handleBadParameter(Exception ex) {
+    public ResponseEntity<ApiError> handleBadParameter() {
         return ResponseEntity.badRequest().body(ApiError.of("invalid_parameter", "A request parameter is missing or invalid"));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ApiError> handleMethod(HttpRequestMethodNotSupportedException ex) {
+    public ResponseEntity<ApiError> handleMethod() {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
                 .body(ApiError.of("method_not_allowed", "HTTP method is not supported for this endpoint"));
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    public ResponseEntity<ApiError> handleMediaType(HttpMediaTypeNotSupportedException ex) {
+    public ResponseEntity<ApiError> handleMediaType() {
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
                 .body(ApiError.of("unsupported_media_type", "Content type must be application/json"));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ApiError> handleNoResource(NoResourceFoundException ex) {
+    public ResponseEntity<ApiError> handleNoResource() {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiError.of("not_found", "No such endpoint"));
     }
 

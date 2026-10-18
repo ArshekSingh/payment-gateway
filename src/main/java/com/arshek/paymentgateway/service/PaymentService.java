@@ -21,6 +21,7 @@ import com.arshek.paymentgateway.provider.ProviderResult;
 import com.arshek.paymentgateway.repository.MerchantRepository;
 import com.arshek.paymentgateway.repository.PaymentRepository;
 import com.arshek.paymentgateway.util.Crypto;
+import com.arshek.paymentgateway.util.IdempotencyKeys;
 import java.time.Clock;
 import java.time.YearMonth;
 import java.util.Currency;
@@ -44,8 +45,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PaymentService {
 
-    private static final int MAX_IDEMPOTENCY_KEY_LENGTH = 100;
-
     private final PaymentRepository paymentRepository;
     private final MerchantRepository merchantRepository;
     private final PaymentProvider provider;
@@ -57,7 +56,7 @@ public class PaymentService {
     @Transactional
     public PaymentCreation create(Long merchantId, CreatePaymentRequest request, String idempotencyKey) {
         validateCurrencyAndAmount(request);
-        String key = normalizeKey(idempotencyKey);
+        String key = IdempotencyKeys.normalize(idempotencyKey);
         String fingerprint = fingerprint(request);
 
         if (key != null) {
@@ -187,18 +186,6 @@ public class PaymentService {
             throw new InvalidRequestException("amount_too_large",
                     "Amount exceeds the maximum of " + properties.maxAmount());
         }
-    }
-
-    private static String normalizeKey(String key) {
-        if (key == null || key.isBlank()) {
-            return null;
-        }
-        String trimmed = key.trim();
-        if (trimmed.length() > MAX_IDEMPOTENCY_KEY_LENGTH) {
-            throw new InvalidRequestException("invalid_idempotency_key",
-                    "Idempotency-Key must be at most " + MAX_IDEMPOTENCY_KEY_LENGTH + " characters");
-        }
-        return trimmed;
     }
 
     private static String fingerprint(CreatePaymentRequest r) {

@@ -15,6 +15,7 @@ import com.arshek.paymentgateway.provider.PaymentProvider;
 import com.arshek.paymentgateway.provider.ProviderResult;
 import com.arshek.paymentgateway.repository.PaymentRepository;
 import com.arshek.paymentgateway.repository.RefundRepository;
+import com.arshek.paymentgateway.util.IdempotencyKeys;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class RefundService {
-
-    private static final int MAX_IDEMPOTENCY_KEY_LENGTH = 100;
 
     private final PaymentRepository paymentRepository;
     private final RefundRepository refundRepository;
@@ -40,7 +39,7 @@ public class RefundService {
         // The payment row lock serialises concurrent refunds so the balance check below is race-free.
         Payment payment = paymentRepository.findOwnedForUpdate(paymentId, merchantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment", paymentId));
-        String key = normalizeKey(idempotencyKey);
+        String key = IdempotencyKeys.normalize(idempotencyKey);
 
         if (key != null) {
             Optional<Refund> existing = refundRepository.findByIdempotencyKey(payment.getId(), key);
@@ -91,15 +90,4 @@ public class RefundService {
                 .map(r -> mapper.toResponse(r, payment.getPublicId())));
     }
 
-    private static String normalizeKey(String key) {
-        if (key == null || key.isBlank()) {
-            return null;
-        }
-        String trimmed = key.trim();
-        if (trimmed.length() > MAX_IDEMPOTENCY_KEY_LENGTH) {
-            throw new InvalidRequestException("invalid_idempotency_key",
-                    "Idempotency-Key must be at most " + MAX_IDEMPOTENCY_KEY_LENGTH + " characters");
-        }
-        return trimmed;
-    }
 }
