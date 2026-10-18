@@ -1,0 +1,5 @@
+gateway:
+  admin-api-key: test-admin-key
+  webhook:
+    dispatcher-enabled: false
+    allow-private-targets: true
